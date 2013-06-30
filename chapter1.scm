@@ -163,4 +163,138 @@
 ; In this new version of sqrt, x is a free variable in the procedures
 ; good-enough? and improve.
 
+; 1.2.1 Linear Recursion and Iteration
+;
+; It's interesting how they introduce recursion without a second thought, I
+; guess this is why using scheme as a teaching language is so powerful.
 
+(define (factorial n)
+  (if (= n 1)
+    1
+    (* n (factorial (- n 1)))))
+
+; Writing an iterative factorial procedure:
+
+(define (fact-iter product counter max-count)
+  (if (> counter max-count)
+    product
+    (fact-iter (* counter product)
+               (+ counter 1)
+               max-count)))
+
+; Recursive process vs. recursive procedure
+;
+; A recursive procedure is one where the procedure refers to the procedure
+; itself (a purely syntactic definition).  A process described as recursive
+; follows a particular pattern of evolution, regardless of how the procedure is
+; written.
+;
+; `fact-iter` is a recursive procedure, however it describes an iterative process.
+;
+; Scheme programs can express iterative processes with recursive procedures
+; because only the state variables need to be stored, rather than the whole stack.
+
+; Exercise 1.9
+; 
+; (define (+ a b)
+; (if (= a 0) b (inc (+ (dec a) b))))
+;
+; (+ 4 5)
+; (inc (+ 3 5))
+; (inc (inc (+ 2 5)))
+; ...
+; (inc (inc (inc (inc 5))))
+; (inc (inc (inc 6)))
+; ...
+; (inc 8)
+; 9
+;
+; Procedure is recursive.
+;
+; (define (+ a b)
+;   (if (= a 0) b (+ (dec a) (inc b))))
+;
+; (+ 4 5)
+; (+ (dec 4) (inc 5))
+; ...
+;
+; Procedure is iterative.
+
+; Exercise 1.10
+;
+; Ackermann's function.
+
+(define (A x y)
+  (cond ((= y 0) 0)
+        ((= x 0) (* 2 y))
+        ((= y 1) 2)
+        (else (A (- x 1) (A x (- y 1))))))
+
+; (A 1 10)
+; Value: 1024
+
+; (A 2 4)
+; Value: 65536
+
+; (A 3 3)
+; Value: 65536
+
+; (define (f n) (A 0 n))
+; (f n) computes 2n
+
+(define (g n) (A 1 n))
+; (g n) => (A 1 n) => (A 0 (A 1 (- y 1))) => ...
+; (g n) computes 2^n
+
+(define (h n) (A 2 n))
+; (h n) => (A 2 n) => (A 1 (A 2 (- y 1))) => (A 0 (A x (- (A 2 (- y 1)) 1))) => 
+; (h n) computes 2^h(n-1), where h(0) = 0 and h(1) = 2 (help from
+; http://www.billthelizard.com/2009/11/sicp-exercises-19-and-110.html)
+;
+; Can also be expressed in terms of g: h(n) = g(2) applied n-1 times.
+
+; 1.2.2 Tree Recursion
+
+(define (fib n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib (- n 1))
+                 (fib (- n 2))))))
+
+; Tree recursion trades time for space, as only the depth of the tree is
+; stored, but number of steps in proportional to number of nodes.
+
+(define (fib-iter a b count)
+  (if (= count 0)
+    b
+    (fib-iter (+ a b) a (- count 1))))
+
+
+(define (count-change amount)
+  (define (first-denomination kinds-of-coins)
+    (cond ((= kinds-of-coins 1) 1)
+          ((= kinds-of-coins 2) 5)
+          ((= kinds-of-coins 3) 10)
+          ((= kinds-of-coins 4) 25)
+          ((= kinds-of-coins 5) 50)))
+  (define (cc amount kinds-of-coins)
+    (cond ((= amount 0) 1)
+          ((or (< amount 0) (= kinds-of-coins 0)) 0)
+          (else (+ (cc amount
+                       (- kinds-of-coins 1))
+                   (cc (- amount
+                          (first-denomination kinds-of-coins)
+                          kinds-of-coins))))))
+  (cc amount 5))
+
+; Exercise 1.11
+; 
+; f(n) = n, for n < 3
+; f(n) = f(n-1) + 2f(n-2) + 3f(n-3), for n >= 3
+
+(define (f n)
+  (if (< n 3)
+    n
+    (+ (f (- n 1))
+       (* 2 (f (- n 2)))
+       (* 3 (f (- n 3))))))
